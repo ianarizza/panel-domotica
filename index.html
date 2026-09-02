@@ -1,153 +1,655 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Domo Smart Sync - Local HTTP</title>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>MY TECHROOM</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
   <style>
     :root {
-      --bg-color: #121214;
-      --card-bg: #1e1e24;
-      --accent-color: #008CBA;
-      --danger-color: #c0392b;
-      --success-color: #27ae60;
-      --text-color: #ffffff;
-      --text-dim: #a0a0a0;
+      --bg-color: #080c16;
+      --card-bg: #101728;
+      --card-inner: #182238;
+      --accent: #ae00ff;
+      --text-main: #ffffff;
+      --text-muted: #64748b;
+      --border-color: #1e293b;
+      --card-radius: 24px;
     }
 
-    * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', Arial, sans-serif; }
-    body { background-color: var(--bg-color); color: var(--text-color); display: flex; flex-direction: column; align-items: center; padding: 20px; min-height: 100vh; }
-    header { text-align: center; margin-bottom: 25px; }
-    h1 { font-size: 1.8rem; margin-bottom: 5px; }
-    
-    .ip-config { background: var(--card-bg); padding: 15px; border-radius: 10px; margin-bottom: 20px; width: 100%; max-width: 500px; display: flex; gap: 10px; align-items: center; border: 1px solid #333; }
-    .ip-config input { flex: 1; padding: 10px; border-radius: 5px; border: 1px solid #444; background: #2a2a32; color: #fff; }
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      font-family: 'Plus Jakarta Sans', sans-serif;
+      -webkit-tap-highlight-color: transparent;
+    }
 
-    .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 20px; width: 100%; max-width: 800px; }
-    .card { background: var(--card-bg); border-radius: 12px; padding: 20px; box-shadow: 0 4px 10px rgba(0,0,0,0.4); border: 1px solid #333; text-align: center; }
-    .card h2 { font-size: 1.2rem; margin-bottom: 15px; border-bottom: 1px solid #333; padding-bottom: 8px; color: var(--text-dim); }
-    
-    .val { font-size: 2rem; font-weight: bold; margin: 10px 0; color: #f39c12; }
-    
-    .status-tag { font-size: 1rem; font-weight: bold; padding: 8px 15px; border-radius: 5px; display: inline-block; width: 100%; }
-    .normal { background-color: var(--success-color); color: white; }
-    .alerta { background-color: var(--danger-color); color: white; animation: blink 1s infinite; }
-    
-    .btn { background-color: var(--accent-color); border: none; color: white; padding: 12px 20px; font-size: 1rem; border-radius: 8px; cursor: pointer; width: 100%; font-weight: bold; transition: opacity 0.2s; margin-top: 10px; }
-    .btn:hover { opacity: 0.9; }
-    .btn:active { transform: scale(0.98); }
-    
-    input[type=range] { width: 80%; margin: 15px 0; accent-color: var(--accent-color); }
+    body {
+      background-color: var(--bg-color);
+      color: var(--text-main);
+      display: flex;
+      justify-content: center;
+      min-height: 100vh;
+      padding: 24px 16px;
+    }
 
-    @keyframes blink {
-      0% { opacity: 1; }
-      50% { opacity: 0.4; }
-      100% { opacity: 1; }
+    .app-container {
+      width: 100%;
+      max-width: 440px;
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+    }
+
+    .view {
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+    }
+
+    .hidden {
+      display: none !important;
+    }
+
+    /* HEADER */
+    header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 8px 4px;
+    }
+
+    .header-title {
+      font-size: 1.5rem;
+      font-weight: 400;
+      letter-spacing: 3px;
+      text-transform: uppercase;
+    }
+
+    .header-subtitle {
+      font-size: 0.85rem;
+      color: var(--text-muted);
+      margin-top: 4px;
+      font-weight: 400;
+    }
+
+    .icon-btn {
+      background: var(--card-inner);
+      border: none;
+      color: var(--text-main);
+      width: 44px;
+      height: 44px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      transition: transform 0.2s, background 0.2s;
+    }
+
+    .icon-btn:active {
+      transform: scale(0.92);
+    }
+
+    /* CARDS */
+    .card {
+      background: var(--card-bg);
+      border-radius: var(--card-radius);
+      padding: 24px;
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+    }
+
+    .card-header {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .card-icon {
+      color: var(--accent);
+      display: flex;
+      align-items: center;
+    }
+
+    .card-title {
+      font-size: 0.95rem;
+      font-weight: 700;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+    }
+
+    /* SEGMENTED CONTROL (MANUAL / AUTO) */
+    .segmented-control {
+      background: var(--card-inner);
+      padding: 5px;
+      border-radius: 16px;
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 4px;
+    }
+
+    .segment-btn {
+      background: transparent;
+      border: none;
+      color: var(--text-muted);
+      padding: 10px;
+      border-radius: 12px;
+      font-size: 0.85rem;
+      font-weight: 600;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      transition: all 0.3s ease;
+    }
+
+    .segment-btn.active {
+      background: var(--accent);
+      color: #ffffff;
+      box-shadow: 0 4px 15px rgba(174, 0, 255, 0.35);
+    }
+
+    /* BIG VALUE DISPLAY */
+    .value-display {
+      text-align: center;
+      padding: 10px 0;
+    }
+
+    .big-number {
+      font-size: 4rem;
+      font-weight: 800;
+      color: var(--accent);
+      line-height: 1;
+      text-shadow: 0 0 30px rgba(174, 0, 255, 0.3);
+    }
+
+    .big-label {
+      font-size: 0.75rem;
+      color: var(--text-muted);
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      margin-top: 8px;
+      font-weight: 600;
+    }
+
+    /* SLIDER BRILLO */
+    .slider-section {
+      border-top: 1px solid rgba(255, 255, 255, 0.06);
+      padding-top: 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    .slider-label {
+      font-size: 0.75rem;
+      color: var(--text-muted);
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      font-weight: 600;
+    }
+
+    .range-input {
+      width: 100%;
+      height: 6px;
+      -webkit-appearance: none;
+      background: var(--card-inner);
+      border-radius: 4px;
+      outline: none;
+    }
+
+    .range-input::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      width: 20px;
+      height: 20px;
+      border-radius: 50%;
+      background: var(--accent);
+      cursor: pointer;
+      box-shadow: 0 0 10px var(--accent);
+    }
+
+    /* CORTINA PRESETS */
+    .presets-grid {
+      display: grid;
+      grid-template-columns: repeat(5, 1fr);
+      gap: 8px;
+    }
+
+    .btn-preset {
+      background: var(--card-inner);
+      border: none;
+      color: var(--text-main);
+      padding: 12px 4px;
+      border-radius: 12px;
+      font-size: 0.75rem;
+      font-weight: 700;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+
+    .btn-preset.active {
+      background: var(--accent);
+      color: #fff;
+    }
+
+    .btn-full {
+      background: var(--card-inner);
+      border: none;
+      color: var(--text-main);
+      padding: 14px;
+      border-radius: 14px;
+      font-weight: 600;
+      font-size: 0.9rem;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      transition: background 0.2s;
+    }
+
+    .btn-full:active {
+      background: rgba(255,255,255,0.1);
+    }
+
+    /* STATUS LIST (GAS) */
+    .status-list {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    .status-item {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-size: 0.85rem;
+      color: var(--text-muted);
+    }
+
+    .status-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: var(--text-muted);
+    }
+
+    .status-dot.active {
+      background: #22c55e;
+      box-shadow: 0 0 10px #22c55e;
+    }
+
+    .status-dot.danger {
+      background: #ef4444;
+      box-shadow: 0 0 10px #ef4444;
+    }
+
+    /* FORM SETTINGS */
+    .form-group {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .form-label {
+      font-size: 0.75rem;
+      color: var(--text-muted);
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      font-weight: 600;
+    }
+
+    .form-input {
+      background: var(--card-inner);
+      border: 1px solid transparent;
+      color: var(--text-main);
+      padding: 14px 16px;
+      border-radius: 14px;
+      font-size: 0.95rem;
+      outline: none;
+      transition: border-color 0.2s;
+    }
+
+    .form-input:focus {
+      border-color: var(--accent);
+    }
+
+    .color-picker-grid {
+      display: flex;
+      gap: 12px;
+      align-items: center;
+      flex-wrap: wrap;
+    }
+
+    .color-circle {
+      width: 36px;
+      height: 36px;
+      border-radius: 50%;
+      cursor: pointer;
+      border: 2px solid transparent;
+      transition: transform 0.2s;
+    }
+
+    .color-circle:active {
+      transform: scale(0.9);
+    }
+
+    .color-input-wrapper {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-top: 8px;
+    }
+
+    .color-preview {
+      width: 36px;
+      height: 36px;
+      border-radius: 8px;
+      background: var(--accent);
+    }
+
+    .btn-primary {
+      background: var(--accent);
+      color: #ffffff;
+      border: none;
+      padding: 16px;
+      border-radius: 16px;
+      font-size: 1rem;
+      font-weight: 700;
+      cursor: pointer;
+      box-shadow: 0 6px 20px rgba(174, 0, 255, 0.4);
+      margin-top: 10px;
     }
   </style>
 </head>
 <body>
 
-  <header>
-    <h1>Domo Smart Sync</h1>
-    <p style="color: var(--text-dim);">Panel de Control Domótico HTTP</p>
-  </header>
+  <div class="app-container">
 
-  <!-- Dirección IP de la ESP32 -->
-  <div class="ip-config">
-    <label for="espIp">IP ESP32:</label>
-    <input type="text" id="espIp" placeholder="Ej: 192.168.1.50">
-  </div>
+    <!-- VISTA PRINCIPAL (DASHBOARD) -->
+    <div id="viewDashboard" class="view">
+      <header>
+        <div>
+          <h1 class="header-title">MY TECHROOM</h1>
+          <div id="connectionStatus" class="header-subtitle">Sin conexión con el dispositivo</div>
+        </div>
+        <button class="icon-btn" onclick="showView('Settings')">
+          <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M12 15a3 3 0 100-6 3 3 0 000 6z"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 010 2.83 2 2 0 01-2.83 0l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-2 2 2 2 0 01-2-2v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83 0 2 2 0 010-2.83l.06-.06a1.65 1.65 0 00.33-1.82 1.65 1.65 0 00-1.51-1H3a2 2 0 01-2-2 2 2 0 012-2h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 010-2.83 2 2 0 012.83 0l.06.06a1.65 1.65 0 001.82.33H9a1.65 1.65 0 001-1.51V3a2 2 0 012-2 2 2 0 012 2v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 0 2 2 0 010 2.83l-.06.06a1.65 1.65 0 00-.33 1.82V9a1.65 1.65 0 001.51 1H21a2 2 0 012 2 2 2 0 01-2 2h-.09a1.65 1.65 0 00-1.51 1z"/></svg>
+        </button>
+      </header>
 
-  <div class="grid">
-    <!-- Módulo Gas/Humo -->
-    <div class="card">
-      <h2>Gas / Humo</h2>
-      <div class="val"><span id="gasValue">--</span></div>
-      <div id="gasStatus" class="status-tag normal">Conectando...</div>
+      <!-- TARJETA LUZ -->
+      <div class="card">
+        <div class="card-header">
+          <div class="card-icon">
+            <svg width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M12 2a7 7 0 00-7 7c0 2.38 1.19 4.47 3 5.74V17a1 1 0 001 1h6a1 1 0 001-1v-2.26C17.81 13.47 19 11.38 19 9a7 7 0 00-7-7zM9 21h6"/></svg>
+          </div>
+          <div class="card-title">LUZ</div>
+        </div>
+
+        <div class="segmented-control">
+          <button id="btnManual" class="segment-btn active" onclick="setMode(false)">
+            🌙 Manual
+          </button>
+          <button id="btnAuto" class="segment-btn" onclick="setMode(true)">
+            ☀️ Auto
+          </button>
+        </div>
+
+        <div class="value-display">
+          <div id="txtBrillo" class="big-number">0%</div>
+          <div class="big-label">SELECCIONADO</div>
+        </div>
+
+        <div class="slider-section">
+          <div class="slider-label">BRILLO DEL DISPOSITIVO</div>
+          <input type="range" id="sliderBrillo" class="range-input" min="0" max="100" value="0" onchange="sendBrillo(this.value)" />
+        </div>
+      </div>
+
+      <!-- TARJETA CORTINA -->
+      <div class="card">
+        <div class="card-header">
+          <div class="card-icon">
+            <svg width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M4 3h16M4 8h16M4 13h16M4 18h16"/></svg>
+          </div>
+          <div class="card-title">CORTINA</div>
+        </div>
+
+        <div style="display: flex; justify-content: space-between; align-items: center;">
+          <span class="slider-label">NIVEL ACTUAL</span>
+          <span id="txtCortinaNivel" style="font-weight: 700; font-size: 0.9rem;">0%</span>
+        </div>
+
+        <div class="presets-grid">
+          <button class="btn-preset active" onclick="triggerMotor(0, this)">Cerrado</button>
+          <button class="btn-preset" onclick="triggerMotor(25, this)">25%</button>
+          <button class="btn-preset" onclick="triggerMotor(50, this)">50%</button>
+          <button class="btn-preset" onclick="triggerMotor(75, this)">75%</button>
+          <button class="btn-preset" onclick="triggerMotor(100, this)">Abierto</button>
+        </div>
+
+        <button class="btn-full" onclick="triggerMotor(-1, null)">
+          <svg width="18" height="18" fill="currentColor" viewBox="0 0 24 24"><path d="M6 6h12v12H6z"/></svg>
+          Detener
+        </button>
+      </div>
+
+      <!-- TARJETA GAS -->
+      <div class="card">
+        <div class="card-header">
+          <div class="card-icon">
+            <svg width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M9.59 4.59A2 2 0 1111 8H2m10.59 11.41A2 2 0 1014 16H2m15.73-8.27A2.5 2.5 0 1119.5 12H2"/></svg>
+          </div>
+          <div class="card-title">GAS</div>
+        </div>
+
+        <div class="status-list">
+          <div class="status-item">
+            <span id="dotGas" class="status-dot"></span>
+            <span id="txtGasState">Esperando datos del sensor...</span>
+          </div>
+          <div class="status-item">
+            <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M1 1l22 22M16.72 11.06A10.94 10.94 0 0119 12.55M5 12.55a10.94 10.94 0 015.17-2.39M10.71 5.05A16 16 0 0122.58 9M1.42 9a15.91 15.91 0 014.7-3.16M8.53 16.11a6 6 0 016.95 0M12 20h.01"/></svg>
+            <span id="txtWifiState">Sin conexión con el dispositivo</span>
+          </div>
+        </div>
+      </div>
     </div>
 
-    <!-- Módulo Iluminación AC -->
-    <div class="card">
-      <h2>Control Iluminación AC</h2>
-      <p>Luz Ambiental: <b><span id="luzValue">--</span> lx</b></p>
-      <p style="margin-top:5px;">Modo: <b><span id="modoText">--</span></b></p>
-      <button class="btn" onclick="toggleModo()">CAMBIAR MODO</button><br><br>
-      <label>Potencia Dimmer: <b id="brilloText">0</b>%</label><br>
-      <input type="range" id="focoSlider" min="0" max="100" value="0" onchange="setBrillo(this.value)">
+    <!-- VISTA CONFIGURACIÓN -->
+    <div id="viewSettings" class="view hidden">
+      <header>
+        <button class="icon-btn" onclick="showView('Dashboard')">
+          <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>
+        </button>
+        <h1 class="header-title" style="font-size: 1.2rem;">CONFIGURACIÓN</h1>
+        <div style="width: 44px;"></div>
+      </header>
+
+      <div class="card">
+        <div class="form-group">
+          <label class="form-label">IP DEL ESP32</label>
+          <input type="text" id="cfgUrl" class="form-input" placeholder="192.168.1.48 o URL Ngrok" />
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">DURACIÓN CORTINA (MS)</label>
+          <input type="number" id="cfgDuration" class="form-input" value="3000" />
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">COLOR DE ACENTO</label>
+          <div class="color-picker-grid">
+            <div class="color-circle" style="background: #3b82f6;" onclick="selectColor('#3b82f6')"></div>
+            <div class="color-circle" style="background: #10b981;" onclick="selectColor('#10b981')"></div>
+            <div class="color-circle" style="background: #f59e0b;" onclick="selectColor('#f59e0b')"></div>
+            <div class="color-circle" style="background: #ec4899;" onclick="selectColor('#ec4899')"></div>
+            <div class="color-circle" style="background: #ae00ff;" onclick="selectColor('#ae00ff')"></div>
+            <div class="color-circle" style="background: #ef4444;" onclick="selectColor('#ef4444')"></div>
+          </div>
+          <div class="color-input-wrapper">
+            <div id="previewColor" class="color-preview"></div>
+            <input type="text" id="cfgHex" class="form-input" value="#ae00ff" style="flex:1;" oninput="updateAccentPreview(this.value)" />
+          </div>
+        </div>
+
+        <button class="btn-primary" onclick="saveSettings()">Guardar</button>
+      </div>
     </div>
 
-    <!-- Módulo Motor Stepper -->
-    <div class="card">
-      <h2>Motor Paso a Paso</h2>
-      <p style="color: var(--text-dim); margin-bottom: 15px;">Envía la señal desde la ESP32 al Arduino para dar 1 vuelta completa[cite: 1].</p>
-      <button class="btn" onclick="girar()">GIRAR MOTOR</button>
-      <p id="statusMotor" style="margin-top: 10px; font-size: 0.9rem; color: #f39c12;"></p>
-    </div>
   </div>
 
   <script>
-    function getUrl() {
-      const ip = document.getElementById('espIp').value.trim();
-      return `http://${ip}`;
+    let currentUrl = "https://bronco-levitator-womb.ngrok-free.dev";
+    let accentColor = "#ae00ff";
+
+    document.addEventListener("DOMContentLoaded", () => {
+      const savedUrl = localStorage.getItem("esp32_url");
+      const savedColor = localStorage.getItem("accent_color");
+      
+      if (savedUrl) currentUrl = savedUrl;
+      if (savedColor) selectColor(savedColor);
+
+      document.getElementById("cfgUrl").value = currentUrl;
+      
+      startPolling();
+    });
+
+    function showView(viewName) {
+      document.getElementById("viewDashboard").classList.add("hidden");
+      document.getElementById("viewSettings").classList.add("hidden");
+      document.getElementById("view" + viewName).classList.remove("hidden");
     }
 
-    async function updateData() {
-      const ip = document.getElementById('espIp').value.trim();
-      if (!ip) return;
+    function selectColor(hex) {
+      accentColor = hex;
+      document.getElementById("cfgHex").value = hex;
+      document.getElementById("previewColor").style.background = hex;
+      document.documentElement.style.setProperty('--accent', hex);
+    }
 
-      try {
-        const res = await fetch(`${getUrl()}/datos`);
-        if (!res.ok) return;
-        const data = await res.json();
-
-        // Sensores
-        document.getElementById('gasValue').innerText = data.gas;
-        document.getElementById('luzValue').innerText = data.lux.toFixed(1);
-        document.getElementById('brilloText').innerText = data.brillo;
-        document.getElementById('focoSlider').value = data.brillo;
-        document.getElementById('modoText').innerText = data.auto ? 'AUTOMÁTICO' : 'MANUAL';
-
-        // Estado Alerta Gas
-        const gasStatus = document.getElementById('gasStatus');
-        if (data.alerta) {
-          gasStatus.innerText = '¡ALERTA DE GAS!';
-          gasStatus.className = 'status-tag alerta';
-        } else {
-          gasStatus.innerText = 'NORMAL';
-          gasStatus.className = 'status-tag normal';
-        }
-      } catch (err) {
-        console.warn('Conectando a ESP32...', err);
+    function updateAccentPreview(hex) {
+      if(/^#[0-9A-F]{6}$/i.test(hex)) {
+        selectColor(hex);
       }
     }
 
-    async function girar() {
+    function saveSettings() {
+      let inputUrl = document.getElementById("cfgUrl").value.trim();
+      if(inputUrl.endsWith("/")) inputUrl = inputUrl.slice(0, -1);
+      
+      currentUrl = inputUrl;
+      localStorage.setItem("esp32_url", currentUrl);
+      localStorage.setItem("accent_color", accentColor);
+
+      showView("Dashboard");
+      startPolling();
+    }
+
+    async function startPolling() {
+      fetchData();
+      setInterval(fetchData, 2000);
+    }
+
+    async function fetchData() {
+      if(!currentUrl) return;
+      
+      let target = currentUrl;
+      if(!target.startsWith("http")) target = "http://" + target;
+
       try {
-        document.getElementById('statusMotor').innerText = 'Activando...';
-        const res = await fetch(`${getUrl()}/girar`);
-        const text = await res.text();
-        document.getElementById('statusMotor').innerText = text;
+        const response = await fetch(`${target}/datos`, {
+          headers: { "ngrok-skip-browser-warning": "true" }
+        });
+
+        if(!response.ok) throw new Error();
+
+        const data = await response.json();
+        updateUI(data);
+        setConnected(true);
       } catch (e) {
-        document.getElementById('statusMotor').innerText = 'Error de conexión';
+        setConnected(false);
       }
     }
 
-    async function toggleModo() {
-      try {
-        await fetch(`${getUrl()}/toggleModo`);
-        updateData();
-      } catch (e) {}
+    function updateUI(data) {
+      if(data.brillo !== undefined) {
+        document.getElementById("txtBrillo").innerText = data.brillo + "%";
+        document.getElementById("sliderBrillo").value = data.brillo;
+      }
+
+      if(data.auto !== undefined) {
+        const btnManual = document.getElementById("btnManual");
+        const btnAuto = document.getElementById("btnAuto");
+        if(data.auto) {
+          btnAuto.classList.add("active");
+          btnManual.classList.remove("active");
+        } else {
+          btnManual.classList.add("active");
+          btnAuto.classList.remove("active");
+        }
+      }
+
+      if(data.alerta !== undefined) {
+        const dot = document.getElementById("dotGas");
+        const txt = document.getElementById("txtGasState");
+        if(data.alerta) {
+          dot.className = "status-dot danger";
+          txt.innerText = "¡ALERTA DE GAS DETECTADA!";
+          txt.style.color = "#ef4444";
+        } else {
+          dot.className = "status-dot active";
+          txt.innerText = `Nivel normal (${data.gas} PPM)`;
+          txt.style.color = "var(--text-muted)";
+        }
+      }
     }
 
-    async function setBrillo(val) {
-      try {
-        await fetch(`${getUrl()}/setBrillo?val=${val}`);
-      } catch (e) {}
+    function setConnected(isConn) {
+      const connTxt = document.getElementById("connectionStatus");
+      const wifiTxt = document.getElementById("txtWifiState");
+      
+      if(isConn) {
+        connTxt.innerText = "Conectado al dispositivo";
+        connTxt.style.color = "#22c55e";
+        wifiTxt.innerText = "Conexión activa con el ESP32";
+      } else {
+        connTxt.innerText = "Sin conexión con el dispositivo";
+        connTxt.style.color = "var(--text-muted)";
+        wifiTxt.innerText = "Sin conexión con el dispositivo";
+      }
     }
 
-    // Refrescar los datos cada 1.5 segundos
-    setInterval(updateData, 1500);
+    async function sendBrillo(val) {
+      let target = currentUrl.startsWith("http") ? currentUrl : "http://" + currentUrl;
+      await fetch(`${target}/setBrillo?val=${val}`, { headers: { "ngrok-skip-browser-warning": "true" } });
+    }
+
+    async function setMode(isAuto) {
+      let target = currentUrl.startsWith("http") ? currentUrl : "http://" + currentUrl;
+      await fetch(`${target}/toggleModo`, { headers: { "ngrok-skip-browser-warning": "true" } });
+    }
+
+    async function triggerMotor(level, btnElem) {
+      if(btnElem) {
+        document.querySelectorAll('.btn-preset').forEach(b => b.classList.remove('active'));
+        btnElem.classList.add('active');
+      }
+      if(level >= 0) {
+        document.getElementById("txtCortinaNivel").innerText = level + "%";
+      }
+
+      let target = currentUrl.startsWith("http") ? currentUrl : "http://" + currentUrl;
+      await fetch(`${target}/girar`, { headers: { "ngrok-skip-browser-warning": "true" } });
+    }
   </script>
 </body>
 </html>

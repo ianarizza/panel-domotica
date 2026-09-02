@@ -46,7 +46,6 @@
 </head>
 <body>
   <div class="container">
-    <!-- VISTA PRINCIPAL (DASHBOARD) -->
     <div id="viewDashboard">
       <header>
         <div>
@@ -56,7 +55,6 @@
         <button class="btn-icon" onclick="showView('Settings')">⚙️</button>
       </header>
 
-      <!-- LUZ -->
       <div class="card">
         <div class="card-title">💡 LUZ</div>
         <div class="btn-group">
@@ -70,7 +68,6 @@
         <input type="range" id="sliderBrillo" min="0" max="100" value="0" oninput="sendBrillo(this.value)">
       </div>
 
-      <!-- CORTINA -->
       <div class="card">
         <div class="card-title">📑 CORTINA</div>
         <div style="display:flex; justify-content: space-between; margin-bottom: 10px;">
@@ -80,7 +77,6 @@
         <button class="btn-action" onclick="triggerMotor(-1, this)">GIRAR / ACCIONAR MOTOR</button>
       </div>
 
-      <!-- GAS / HUMO -->
       <div class="card">
         <div class="card-title">🔥 GAS / HUMO</div>
         <div style="display: flex; align-items: center; margin-top: 10px;">
@@ -90,7 +86,6 @@
       </div>
     </div>
 
-    <!-- VISTA CONFIGURACIÓN -->
     <div id="viewSettings" class="hidden">
       <header>
         <h1>Configuración</h1>
@@ -114,46 +109,32 @@
 
     function getTargetHost() {
       let saved = localStorage.getItem("esp32_url") || DEFAULT_URL;
-      saved = saved.trim().replace(/^(https?:\/\/)+/i, '').split('/')[0];
-      return saved || DEFAULT_URL;
+      return saved.trim().replace(/^(https?:\/\/)+/i, '').split('/')[0] || DEFAULT_URL;
     }
 
     function getFullUrl(endpoint) {
       const host = getTargetHost();
-      const separator = endpoint.includes('?') ? '&' : '?';
-      return `https://${host}${endpoint}${separator}ngrok-skip-browser-warning=true`;
+      const sep = endpoint.includes('?') ? '&' : '?';
+      return `https://${host}${endpoint}${sep}ngrok-skip-browser-warning=true`;
     }
 
     document.addEventListener("DOMContentLoaded", () => {
       const inputUrl = document.getElementById("cfgUrl");
       if (inputUrl) inputUrl.value = getTargetHost();
-
-      const savedColor = localStorage.getItem("accent_color");
-      if (savedColor) selectColor(savedColor);
-      
       startPolling();
     });
 
-    function showView(viewName) {
+    function showView(v) {
       document.getElementById("viewDashboard").classList.add("hidden");
       document.getElementById("viewSettings").classList.add("hidden");
-      document.getElementById("view" + viewName).classList.remove("hidden");
-    }
-
-    function selectColor(hex) {
-      if (!hex) return;
-      document.documentElement.style.setProperty('--accent', hex);
-      localStorage.setItem("accent_color", hex);
+      document.getElementById("view" + v).classList.remove("hidden");
     }
 
     function saveSettings() {
       const inputElem = document.getElementById("cfgUrl");
-      let inputUrl = inputElem ? inputElem.value.trim() : "";
-      inputUrl = inputUrl.replace(/^(https?:\/\/)+/i, '').split('/')[0];
-
-      if (!inputUrl) inputUrl = DEFAULT_URL;
-
-      localStorage.setItem("esp32_url", inputUrl);
+      let url = inputElem ? inputElem.value.trim() : "";
+      url = url.replace(/^(https?:\/\/)+/i, '').split('/')[0] || DEFAULT_URL;
+      localStorage.setItem("esp32_url", url);
       showView("Dashboard");
       fetchData();
     }
@@ -165,10 +146,9 @@
 
     async function fetchData() {
       try {
-        const response = await fetch(getFullUrl("/datos"));
-        if (!response.ok) throw new Error("HTTP error " + response.status);
-
-        const data = await response.json();
+        const res = await fetch(getFullUrl("/datos"));
+        if (!res.ok) throw new Error();
+        const data = await res.json();
         updateUI(data);
         setConnected(true);
       } catch (e) {
@@ -178,39 +158,26 @@
 
     function updateUI(data) {
       if (data.brillo !== undefined) {
-        const txtBrillo = document.getElementById("txtBrillo");
-        const sliderBrillo = document.getElementById("sliderBrillo");
-        if (txtBrillo) txtBrillo.innerText = data.brillo + "%";
-        if (sliderBrillo) sliderBrillo.value = data.brillo;
+        const txt = document.getElementById("txtBrillo");
+        const slider = document.getElementById("sliderBrillo");
+        if (txt) txt.innerText = data.brillo + "%";
+        if (slider) slider.value = data.brillo;
       }
-
       if (data.auto !== undefined) {
-        const btnManual = document.getElementById("btnManual");
-        const btnAuto = document.getElementById("btnAuto");
-        if (btnAuto && btnManual) {
-          if (data.auto) {
-            btnAuto.classList.add("active");
-            btnManual.classList.remove("active");
-          } else {
-            btnManual.classList.add("active");
-            btnAuto.classList.remove("active");
-          }
+        const btnM = document.getElementById("btnManual");
+        const btnA = document.getElementById("btnAuto");
+        if (btnA && btnM) {
+          btnA.classList.toggle("active", data.auto);
+          btnM.classList.toggle("active", !data.auto);
         }
       }
-
       if (data.alerta !== undefined || data.gas !== undefined) {
         const dot = document.getElementById("dotGas");
         const txt = document.getElementById("txtGasState");
         if (dot && txt) {
-          if (data.alerta) {
-            dot.className = "status-dot danger";
-            txt.innerText = "¡ALERTA DE GAS DETECTADA!";
-            txt.style.color = "#ef4444";
-          } else {
-            dot.className = "status-dot active";
-            txt.innerText = `Nivel normal (${data.gas || 0} PPM)`;
-            txt.style.color = "var(--text-muted)";
-          }
+          dot.className = data.alerta ? "status-dot danger" : "status-dot active";
+          txt.innerText = data.alerta ? "¡ALERTA DE GAS DETECTADA!" : `Nivel normal (${data.gas || 0} PPM)`;
+          txt.style.color = data.alerta ? "#ef4444" : "var(--text-muted)";
         }
       }
     }
@@ -218,44 +185,23 @@
     function setConnected(isConn) {
       const connTxt = document.getElementById("connectionStatus");
       const wifiTxt = document.getElementById("txtWifiState");
-      
       if (connTxt) {
-        if (isConn) {
-          connTxt.innerText = "Conectado al dispositivo";
-          connTxt.style.color = "#22c55e";
-        } else {
-          connTxt.innerText = "Sin conexión con el dispositivo";
-          connTxt.style.color = "var(--text-muted)";
-        }
+        connTxt.innerText = isConn ? "Conectado al dispositivo" : "Sin conexión con el dispositivo";
+        connTxt.style.color = isConn ? "#22c55e" : "var(--text-muted)";
       }
-
-      if (wifiTxt) {
-        wifiTxt.innerText = isConn ? "Conexión activa con el ESP32" : "Sin conexión con el dispositivo";
-      }
+      if (wifiTxt) wifiTxt.innerText = isConn ? "Conexión activa con el ESP32" : "Sin conexión con el dispositivo";
     }
 
     async function sendBrillo(val) {
-      try {
-        await fetch(getFullUrl(`/setBrillo?val=${val}`));
-      } catch(e){}
+      try { await fetch(getFullUrl(`/setBrillo?val=${val}`)); } catch(e){}
     }
 
     async function setMode(isAuto) {
-      try {
-        await fetch(getFullUrl("/toggleModo"));
-        fetchData();
-      } catch(e){}
+      try { await fetch(getFullUrl("/toggleModo")); fetchData(); } catch(e){}
     }
 
     async function triggerMotor(level, btnElem) {
-      if (level >= 0) {
-        const cortinaElem = document.getElementById("txtCortinaNivel");
-        if (cortinaElem) cortinaElem.innerText = level + "%";
-      }
-
-      try {
-        await fetch(getFullUrl("/girar"));
-      } catch(e){}
+      try { await fetch(getFullUrl("/girar")); } catch(e){}
     }
   </script>
 </body>

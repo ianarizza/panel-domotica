@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Domo Smart Sync - Local HTTP</title>
+  <style>
+    :root {
+      --bg-color: #121214;
+      --card-bg: #1e1e24;
+      --accent-color: #008CBA;
+      --danger-color: #c0392b;
+      --success-color: #27ae60;
+      --text-color: #ffffff;
+      --text-dim: #a0a0a0;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', Arial, sans-serif; }
+    body { background-color: var(--bg-color); color: var(--text-color); display: flex; flex-direction: column; align-items: center; padding: 20px; min-height: 100vh; }
+    header { text-align: center; margin-bottom: 25px; }
+    h1 { font-size: 1.8rem; margin-bottom: 5px; }
+    
+    .ip-config { background: var(--card-bg); padding: 15px; border-radius: 10px; margin-bottom: 20px; width: 100%; max-width: 500px; display: flex; gap: 10px; align-items: center; border: 1px solid #333; }
+    .ip-config input { flex: 1; padding: 10px; border-radius: 5px; border: 1px solid #444; background: #2a2a32; color: #fff; }
+
+    .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 20px; width: 100%; max-width: 800px; }
+    .card { background: var(--card-bg); border-radius: 12px; padding: 20px; box-shadow: 0 4px 10px rgba(0,0,0,0.4); border: 1px solid #333; text-align: center; }
+    .card h2 { font-size: 1.2rem; margin-bottom: 15px; border-bottom: 1px solid #333; padding-bottom: 8px; color: var(--text-dim); }
+    
+    .val { font-size: 2rem; font-weight: bold; margin: 10px 0; color: #f39c12; }
+    
+    .status-tag { font-size: 1rem; font-weight: bold; padding: 8px 15px; border-radius: 5px; display: inline-block; width: 100%; }
+    .normal { background-color: var(--success-color); color: white; }
+    .alerta { background-color: var(--danger-color); color: white; animation: blink 1s infinite; }
+    
+    .btn { background-color: var(--accent-color); border: none; color: white; padding: 12px 20px; font-size: 1rem; border-radius: 8px; cursor: pointer; width: 100%; font-weight: bold; transition: opacity 0.2s; margin-top: 10px; }
+    .btn:hover { opacity: 0.9; }
+    .btn:active { transform: scale(0.98); }
+    
+    input[type=range] { width: 80%; margin: 15px 0; accent-color: var(--accent-color); }
+
+    @keyframes blink {
+      0% { opacity: 1; }
+      50% { opacity: 0.4; }
+      100% { opacity: 1; }
+    }
+  </style>
+</head>
+<body>
+
+  <header>
+    <h1>Domo Smart Sync</h1>
+    <p style="color: var(--text-dim);">Panel de Control Domótico HTTP</p>
+  </header>
+
+  <!-- Dirección IP de la ESP32 -->
+  <div class="ip-config">
+    <label for="espIp">IP ESP32:</label>
+    <input type="text" id="espIp" placeholder="Ej: 192.168.1.50">
+  </div>
+
+  <div class="grid">
+    <!-- Módulo Gas/Humo -->
+    <div class="card">
+      <h2>Gas / Humo</h2>
+      <div class="val"><span id="gasValue">--</span></div>
+      <div id="gasStatus" class="status-tag normal">Conectando...</div>
+    </div>
+
+    <!-- Módulo Iluminación AC -->
+    <div class="card">
+      <h2>Control Iluminación AC</h2>
+      <p>Luz Ambiental: <b><span id="luzValue">--</span> lx</b></p>
+      <p style="margin-top:5px;">Modo: <b><span id="modoText">--</span></b></p>
+      <button class="btn" onclick="toggleModo()">CAMBIAR MODO</button><br><br>
+      <label>Potencia Dimmer: <b id="brilloText">0</b>%</label><br>
+      <input type="range" id="focoSlider" min="0" max="100" value="0" onchange="setBrillo(this.value)">
+    </div>
+
+    <!-- Módulo Motor Stepper -->
+    <div class="card">
+      <h2>Motor Paso a Paso</h2>
+      <p style="color: var(--text-dim); margin-bottom: 15px;">Envía la señal desde la ESP32 al Arduino para dar 1 vuelta completa[cite: 1].</p>
+      <button class="btn" onclick="girar()">GIRAR MOTOR</button>
+      <p id="statusMotor" style="margin-top: 10px; font-size: 0.9rem; color: #f39c12;"></p>
+    </div>
+  </div>
+
+  <script>
+    function getUrl() {
+      const ip = document.getElementById('espIp').value.trim();
+      return `http://${ip}`;
+    }
+
+    async function updateData() {
+      const ip = document.getElementById('espIp').value.trim();
+      if (!ip) return;
+
+      try {
+        const res = await fetch(`${getUrl()}/datos`);
+        if (!res.ok) return;
+        const data = await res.json();
+
+        // Sensores
+        document.getElementById('gasValue').innerText = data.gas;
+        document.getElementById('luzValue').innerText = data.lux.toFixed(1);
+        document.getElementById('brilloText').innerText = data.brillo;
+        document.getElementById('focoSlider').value = data.brillo;
+        document.getElementById('modoText').innerText = data.auto ? 'AUTOMÁTICO' : 'MANUAL';
+
+        // Estado Alerta Gas
+        const gasStatus = document.getElementById('gasStatus');
+        if (data.alerta) {
+          gasStatus.innerText = '¡ALERTA DE GAS!';
+          gasStatus.className = 'status-tag alerta';
+        } else {
+          gasStatus.innerText = 'NORMAL';
+          gasStatus.className = 'status-tag normal';
+        }
+      } catch (err) {
+        console.warn('Conectando a ESP32...', err);
+      }
+    }
+
+    async function girar() {
+      try {
+        document.getElementById('statusMotor').innerText = 'Activando...';
+        const res = await fetch(`${getUrl()}/girar`);
+        const text = await res.text();
+        document.getElementById('statusMotor').innerText = text;
+      } catch (e) {
+        document.getElementById('statusMotor').innerText = 'Error de conexión';
+      }
+    }
+
+    async function toggleModo() {
+      try {
+        await fetch(`${getUrl()}/toggleModo`);
+        updateData();
+      } catch (e) {}
+    }
+
+    async function setBrillo(val) {
+      try {
+        await fetch(`${getUrl()}/setBrillo?val=${val}`);
+      } catch (e) {}
+    }
+
+    // Refrescar los datos cada 1.5 segundos
+    setInterval(updateData, 1500);
+  </script>
+</body>
+</html>

@@ -476,8 +476,8 @@
 
       <div class="card">
         <div class="form-group">
-          <label class="form-label">IP DEL ESP32</label>
-          <input type="text" id="cfgUrl" class="form-input" placeholder="192.168.1.48 o URL Ngrok" />
+          <label class="form-label">IP DEL ESP32 / URL NGROK</label>
+          <input type="text" id="cfgUrl" class="form-input" placeholder="https://bronco-levitator-womb.ngrok-free.dev" />
         </div>
 
         <div class="form-group">
@@ -551,25 +551,30 @@
       localStorage.setItem("accent_color", accentColor);
 
       showView("Dashboard");
-      startPolling();
+      fetchData();
     }
 
-    async function startPolling() {
+    function startPolling() {
       fetchData();
       setInterval(fetchData, 2000);
     }
 
+    function getCleanUrl(endpoint) {
+      let base = currentUrl.trim();
+      if (!base.startsWith("http://") && !base.startsWith("https://")) {
+        base = "https://" + base;
+      }
+      if (base.endsWith("/")) base = base.slice(0, -1);
+
+      const separator = endpoint.includes("?") ? "&" : "?";
+      return `${base}${endpoint}${separator}ngrok-skip-browser-warning=true`;
+    }
+
     async function fetchData() {
       if(!currentUrl) return;
-      
-      let target = currentUrl;
-      if(!target.startsWith("http")) target = "http://" + target;
 
       try {
-        const response = await fetch(`${target}/datos`, {
-          headers: { "ngrok-skip-browser-warning": "true" }
-        });
-
+        const response = await fetch(getCleanUrl("/datos"));
         if(!response.ok) throw new Error();
 
         const data = await response.json();
@@ -629,13 +634,15 @@
     }
 
     async function sendBrillo(val) {
-      let target = currentUrl.startsWith("http") ? currentUrl : "http://" + currentUrl;
-      await fetch(`${target}/setBrillo?val=${val}`, { headers: { "ngrok-skip-browser-warning": "true" } });
+      try {
+        await fetch(getCleanUrl(`/setBrillo?val=${val}`));
+      } catch(e){}
     }
 
     async function setMode(isAuto) {
-      let target = currentUrl.startsWith("http") ? currentUrl : "http://" + currentUrl;
-      await fetch(`${target}/toggleModo`, { headers: { "ngrok-skip-browser-warning": "true" } });
+      try {
+        await fetch(getCleanUrl("/toggleModo"));
+      } catch(e){}
     }
 
     async function triggerMotor(level, btnElem) {
@@ -647,8 +654,9 @@
         document.getElementById("txtCortinaNivel").innerText = level + "%";
       }
 
-      let target = currentUrl.startsWith("http") ? currentUrl : "http://" + currentUrl;
-      await fetch(`${target}/girar`, { headers: { "ngrok-skip-browser-warning": "true" } });
+      try {
+        await fetch(getCleanUrl("/girar"));
+      } catch(e){}
     }
   </script>
 </body>

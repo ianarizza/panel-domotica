@@ -115,12 +115,8 @@
     function getFullUrl(endpoint) {
       const host = getTargetHost();
       const sep = endpoint.includes('?') ? '&' : '?';
-      return `https://${host}${endpoint}${sep}ngrok-skip-browser-warning=true`;
+      return `https://${host}${endpoint}${sep}ngrok-skip-browser-warning=69420`;
     }
-
-    const fetchHeaders = {
-      "ngrok-skip-browser-warning": "true"
-    };
 
     document.addEventListener("DOMContentLoaded", () => {
       const inputUrl = document.getElementById("cfgUrl");
@@ -145,12 +141,12 @@
 
     function startPolling() {
       fetchData();
-      setInterval(fetchData, 2000);
+      setInterval(fetchData, 2500);
     }
 
     async function fetchData() {
       try {
-        const res = await fetch(getFullUrl("/datos"), { headers: fetchHeaders });
+        const res = await fetch(getFullUrl("/datos"));
         if (!res.ok) throw new Error();
         const data = await res.json();
         updateUI(data);
@@ -197,15 +193,15 @@
     }
 
     async function sendBrillo(val) {
-      try { await fetch(getFullUrl(`/setBrillo?val=${val}`), { headers: fetchHeaders }); } catch(e){}
+      try { await fetch(getFullUrl(`/setBrillo?val=${val}`)); } catch(e){}
     }
 
     async function setMode(isAuto) {
-      try { await fetch(getFullUrl("/toggleModo"), { headers: fetchHeaders }); fetchData(); } catch(e){}
+      try { await fetch(getFullUrl("/toggleModo")); fetchData(); } catch(e){}
     }
 
     async function triggerMotor(level, btnElem) {
-      try { await fetch(getFullUrl("/girar"), { headers: fetchHeaders }); } catch(e){}
+      try { await fetch(getFullUrl("/girar")); } catch(e){}
     }
   </script>
 </body>

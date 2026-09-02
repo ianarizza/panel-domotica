@@ -115,7 +115,7 @@
     function getFullUrl(endpoint) {
       const host = getTargetHost();
       const sep = endpoint.includes('?') ? '&' : '?';
-      return `https://${host}${endpoint}${sep}ngrok-skip-browser-warning=69420`;
+      return `https://${host}${endpoint}${sep}ngrok-skip-browser-warning=true`;
     }
 
     document.addEventListener("DOMContentLoaded", () => {
@@ -153,8 +153,6 @@
       } catch (e) {
         setConnected(false);
       } finally {
-        // En lugar de saturar al ESP32 con peticiones encimadas,
-        // esperamos 3 segundos después de que termina esta respuesta.
         setTimeout(fetchData, 3000);
       }
     }

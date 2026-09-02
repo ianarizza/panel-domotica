@@ -107,14 +107,6 @@
   <script>
     const DEFAULT_URL = "bronco-levitator-womb.ngrok-free.dev";
 
-    // Opciones globales para omitir la advertencia de Ngrok en cada consulta fetch
-    const FETCH_OPTIONS = {
-      method: 'GET',
-      headers: {
-        'ngrok-skip-browser-warning': 'true'
-      }
-    };
-
     function getTargetHost() {
       let saved = localStorage.getItem("esp32_url") || DEFAULT_URL;
       return saved.trim().replace(/^(https?:\/\/)+/i, '').split('/')[0] || DEFAULT_URL;
@@ -153,7 +145,7 @@
 
     async function fetchData() {
       try {
-        const res = await fetch(getFullUrl("/datos"), FETCH_OPTIONS);
+        const res = await fetch(getFullUrl("/datos"));
         if (!res.ok) throw new Error();
         const data = await res.json();
         updateUI(data);
@@ -202,15 +194,15 @@
     }
 
     async function sendBrillo(val) {
-      try { await fetch(getFullUrl(`/setBrillo?val=${val}`), FETCH_OPTIONS); } catch(e){}
+      try { await fetch(getFullUrl(`/setBrillo?val=${val}`)); } catch(e){}
     }
 
     async function setMode(isAuto) {
-      try { await fetch(getFullUrl("/toggleModo"), FETCH_OPTIONS); } catch(e){}
+      try { await fetch(getFullUrl("/toggleModo")); } catch(e){}
     }
 
     async function triggerMotor(level, btnElem) {
-      try { await fetch(getFullUrl("/girar"), FETCH_OPTIONS); } catch(e){}
+      try { await fetch(getFullUrl("/girar")); } catch(e){}
     }
   </script>
 </body>

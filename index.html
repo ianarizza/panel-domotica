@@ -1,9 +1,119 @@
-<script>
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>MY TECHROOM - Panel Domótico</title>
+  <style>
+    :root {
+      --accent: #a855f7;
+      --bg: #090d16;
+      --card-bg: #111827;
+      --text: #f3f4f6;
+      --text-muted: #9ca3af;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; font-family: system-ui, -apple-system, sans-serif; }
+    body { background-color: var(--bg); color: var(--text); padding: 20px; display: flex; justify-content: center; }
+    .container { max-width: 500px; width: 100%; }
+
+    header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px; }
+    h1 { font-size: 1.5rem; font-weight: 700; letter-spacing: 1px; }
+    .status { font-size: 0.85rem; color: var(--text-muted); margin-top: 4px; }
+    
+    .btn-icon { background: var(--card-bg); border: 1px solid #1f2937; color: var(--text); width: 40px; height: 40px; border-radius: 50%; display: flex; align-items: center; justify-content: center; cursor: pointer; }
+
+    .card { background: var(--card-bg); border-radius: 16px; padding: 20px; margin-bottom: 20px; border: 1px solid #1f2937; }
+    .card-title { font-size: 1rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; color: var(--text-muted); margin-bottom: 16px; display: flex; align-items: center; gap: 8px; }
+
+    .btn-group { display: flex; gap: 10px; background: #030712; padding: 4px; border-radius: 12px; margin-bottom: 20px; }
+    .btn-toggle { flex: 1; padding: 10px; border: none; background: transparent; color: var(--text-muted); border-radius: 8px; font-weight: 600; cursor: pointer; transition: all 0.2s; }
+    .btn-toggle.active { background: var(--accent); color: white; }
+
+    .value-display { font-size: 2.5rem; font-weight: 800; text-align: center; color: var(--accent); margin: 15px 0; }
+    .value-label { font-size: 0.75rem; text-align: center; color: var(--text-muted); text-transform: uppercase; letter-spacing: 1px; }
+
+    input[type=range] { width: 100%; accent-color: var(--accent); cursor: pointer; }
+    input[type=text] { width: 100%; padding: 12px; background: #030712; border: 1px solid #1f2937; border-radius: 8px; color: white; margin-bottom: 15px; }
+
+    .status-dot { width: 10px; height: 10px; border-radius: 50%; display: inline-block; margin-right: 6px; }
+    .status-dot.active { background: #22c55e; }
+    .status-dot.danger { background: #ef4444; }
+
+    .btn-action { width: 100%; padding: 12px; background: var(--accent); border: none; border-radius: 8px; color: white; font-weight: bold; cursor: pointer; margin-top: 10px; }
+    .hidden { display: none; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <!-- VISTA PRINCIPAL (DASHBOARD) -->
+    <div id="viewDashboard">
+      <header>
+        <div>
+          <h1>MY TECHROOM</h1>
+          <div id="connectionStatus" class="status">Cargando...</div>
+        </div>
+        <button class="btn-icon" onclick="showView('Settings')">⚙️</button>
+      </header>
+
+      <!-- LUZ -->
+      <div class="card">
+        <div class="card-title">💡 LUZ</div>
+        <div class="btn-group">
+          <button id="btnManual" class="btn-toggle active" onclick="setMode(false)">🌙 Manual</button>
+          <button id="btnAuto" class="btn-toggle" onclick="setMode(true)">🌞 Auto</button>
+        </div>
+        <div class="value-display" id="txtBrillo">0%</div>
+        <div class="value-label">SELECCIONADO</div>
+        <br>
+        <label style="font-size: 0.8rem; color: var(--text-muted);">BRILLO DEL DISPOSITIVO</label>
+        <input type="range" id="sliderBrillo" min="0" max="100" value="0" oninput="sendBrillo(this.value)">
+      </div>
+
+      <!-- CORTINA -->
+      <div class="card">
+        <div class="card-title">📑 CORTINA</div>
+        <div style="display:flex; justify-content: space-between; margin-bottom: 10px;">
+          <span>NIVEL ACTUAL</span>
+          <span id="txtCortinaNivel" style="font-weight: bold;">0%</span>
+        </div>
+        <button class="btn-action" onclick="triggerMotor(-1, this)">GIRAR / ACCIONAR MOTOR</button>
+      </div>
+
+      <!-- GAS / HUMO -->
+      <div class="card">
+        <div class="card-title">🔥 GAS / HUMO</div>
+        <div style="display: flex; align-items: center; margin-top: 10px;">
+          <span id="dotGas" class="status-dot active"></span>
+          <span id="txtGasState" style="color: var(--text-muted);">Cargando estado...</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- VISTA CONFIGURACIÓN -->
+    <div id="viewSettings" class="hidden">
+      <header>
+        <h1>Configuración</h1>
+        <button class="btn-icon" onclick="showView('Dashboard')">✕</button>
+      </header>
+
+      <div class="card">
+        <label style="display:block; margin-bottom: 8px; font-weight: 600;">URL Ngrok / Dominio ESP32:</label>
+        <input type="text" id="cfgUrl" placeholder="ejemplo.ngrok-free.dev">
+        
+        <label style="display:block; margin-bottom: 8px; font-weight: 600;">Estado de Red:</label>
+        <p id="txtWifiState" style="color: var(--text-muted); font-size: 0.9rem; margin-bottom: 15px;">Sin verificar</p>
+
+        <button class="btn-action" onclick="saveSettings()">Guardar y Aplicar</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
     const DEFAULT_URL = "bronco-levitator-womb.ngrok-free.dev";
 
     function getTargetHost() {
       let saved = localStorage.getItem("esp32_url") || DEFAULT_URL;
-      // Limpia http://, https://, slashes y rutas accidentales
       saved = saved.trim().replace(/^(https?:\/\/)+/i, '').split('/')[0];
       return saved || DEFAULT_URL;
     }
@@ -15,7 +125,9 @@
     }
 
     document.addEventListener("DOMContentLoaded", () => {
-      document.getElementById("cfgUrl").value = getTargetHost();
+      const inputUrl = document.getElementById("cfgUrl");
+      if (inputUrl) inputUrl.value = getTargetHost();
+
       const savedColor = localStorage.getItem("accent_color");
       if (savedColor) selectColor(savedColor);
       
@@ -29,18 +141,14 @@
     }
 
     function selectColor(hex) {
-      document.getElementById("cfgHex").value = hex;
-      document.getElementById("previewColor").style.background = hex;
+      if (!hex) return;
       document.documentElement.style.setProperty('--accent', hex);
       localStorage.setItem("accent_color", hex);
     }
 
-    function updateAccentPreview(hex) {
-      if(/^#[0-9A-F]{6}$/i.test(hex)) selectColor(hex);
-    }
-
     function saveSettings() {
-      let inputUrl = document.getElementById("cfgUrl").value.trim();
+      const inputElem = document.getElementById("cfgUrl");
+      let inputUrl = inputElem ? inputElem.value.trim() : "";
       inputUrl = inputUrl.replace(/^(https?:\/\/)+/i, '').split('/')[0];
 
       if (!inputUrl) inputUrl = DEFAULT_URL;
@@ -58,7 +166,7 @@
     async function fetchData() {
       try {
         const response = await fetch(getFullUrl("/datos"));
-        if(!response.ok) throw new Error();
+        if (!response.ok) throw new Error("HTTP error " + response.status);
 
         const data = await response.json();
         updateUI(data);
@@ -69,34 +177,40 @@
     }
 
     function updateUI(data) {
-      if(data.brillo !== undefined) {
-        document.getElementById("txtBrillo").innerText = data.brillo + "%";
-        document.getElementById("sliderBrillo").value = data.brillo;
+      if (data.brillo !== undefined) {
+        const txtBrillo = document.getElementById("txtBrillo");
+        const sliderBrillo = document.getElementById("sliderBrillo");
+        if (txtBrillo) txtBrillo.innerText = data.brillo + "%";
+        if (sliderBrillo) sliderBrillo.value = data.brillo;
       }
 
-      if(data.auto !== undefined) {
+      if (data.auto !== undefined) {
         const btnManual = document.getElementById("btnManual");
         const btnAuto = document.getElementById("btnAuto");
-        if(data.auto) {
-          btnAuto.classList.add("active");
-          btnManual.classList.remove("active");
-        } else {
-          btnManual.classList.add("active");
-          btnAuto.classList.remove("active");
+        if (btnAuto && btnManual) {
+          if (data.auto) {
+            btnAuto.classList.add("active");
+            btnManual.classList.remove("active");
+          } else {
+            btnManual.classList.add("active");
+            btnAuto.classList.remove("active");
+          }
         }
       }
 
-      if(data.alerta !== undefined) {
+      if (data.alerta !== undefined || data.gas !== undefined) {
         const dot = document.getElementById("dotGas");
         const txt = document.getElementById("txtGasState");
-        if(data.alerta) {
-          dot.className = "status-dot danger";
-          txt.innerText = "¡ALERTA DE GAS DETECTADA!";
-          txt.style.color = "#ef4444";
-        } else {
-          dot.className = "status-dot active";
-          txt.innerText = `Nivel normal (${data.gas} PPM)`;
-          txt.style.color = "var(--text-muted)";
+        if (dot && txt) {
+          if (data.alerta) {
+            dot.className = "status-dot danger";
+            txt.innerText = "¡ALERTA DE GAS DETECTADA!";
+            txt.style.color = "#ef4444";
+          } else {
+            dot.className = "status-dot active";
+            txt.innerText = `Nivel normal (${data.gas || 0} PPM)`;
+            txt.style.color = "var(--text-muted)";
+          }
         }
       }
     }
@@ -105,14 +219,18 @@
       const connTxt = document.getElementById("connectionStatus");
       const wifiTxt = document.getElementById("txtWifiState");
       
-      if(isConn) {
-        connTxt.innerText = "Conectado al dispositivo";
-        connTxt.style.color = "#22c55e";
-        wifiTxt.innerText = "Conexión activa con el ESP32";
-      } else {
-        connTxt.innerText = "Sin conexión con el dispositivo";
-        connTxt.style.color = "var(--text-muted)";
-        wifiTxt.innerText = "Sin conexión con el dispositivo";
+      if (connTxt) {
+        if (isConn) {
+          connTxt.innerText = "Conectado al dispositivo";
+          connTxt.style.color = "#22c55e";
+        } else {
+          connTxt.innerText = "Sin conexión con el dispositivo";
+          connTxt.style.color = "var(--text-muted)";
+        }
+      }
+
+      if (wifiTxt) {
+        wifiTxt.innerText = isConn ? "Conexión activa con el ESP32" : "Sin conexión con el dispositivo";
       }
     }
 
@@ -125,16 +243,14 @@
     async function setMode(isAuto) {
       try {
         await fetch(getFullUrl("/toggleModo"));
+        fetchData();
       } catch(e){}
     }
 
     async function triggerMotor(level, btnElem) {
-      if(btnElem) {
-        document.querySelectorAll('.btn-preset').forEach(b => b.classList.remove('active'));
-        btnElem.classList.add('active');
-      }
-      if(level >= 0) {
-        document.getElementById("txtCortinaNivel").innerText = level + "%";
+      if (level >= 0) {
+        const cortinaElem = document.getElementById("txtCortinaNivel");
+        if (cortinaElem) cortinaElem.innerText = level + "%";
       }
 
       try {
@@ -142,3 +258,5 @@
       } catch(e){}
     }
   </script>
+</body>
+</html>

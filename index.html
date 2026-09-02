@@ -124,7 +124,7 @@
       text-transform: uppercase;
     }
 
-    /* SEGMENTED CONTROL (MANUAL / AUTO) */
+    /* SEGMENTED CONTROL */
     .segmented-control {
       background: var(--card-inner);
       padding: 5px;
@@ -259,7 +259,7 @@
       background: rgba(255,255,255,0.1);
     }
 
-    /* STATUS LIST (GAS) */
+    /* STATUS LIST */
     .status-list {
       display: flex;
       flex-direction: column;
@@ -373,7 +373,7 @@
 
   <div class="app-container">
 
-    <!-- VISTA PRINCIPAL (DASHBOARD) -->
+    <!-- VISTA DASHBOARD -->
     <div id="viewDashboard" class="view">
       <header>
         <div>
@@ -476,8 +476,8 @@
 
       <div class="card">
         <div class="form-group">
-          <label class="form-label">IP DEL ESP32 / URL NGROK</label>
-          <input type="text" id="cfgUrl" class="form-input" placeholder="https://bronco-levitator-womb.ngrok-free.dev" />
+          <label class="form-label">URL DE NGROK</label>
+          <input type="text" id="cfgUrl" class="form-input" placeholder="bronco-levitator-womb.ngrok-free.dev" />
         </div>
 
         <div class="form-group">
@@ -508,20 +508,48 @@
   </div>
 
   <script>
-    let currentUrl = "https://bronco-levitator-womb.ngrok-free.dev";
+    const DEFAULT_URL = "bronco-levitator-womb.ngrok-free.dev";
+    let currentUrl = DEFAULT_URL;
     let accentColor = "#ae00ff";
 
     document.addEventListener("DOMContentLoaded", () => {
-      const savedUrl = localStorage.getItem("esp32_url");
+      let savedUrl = localStorage.getItem("esp32_url");
       const savedColor = localStorage.getItem("accent_color");
-      
-      if (savedUrl) currentUrl = savedUrl;
-      if (savedColor) selectColor(savedColor);
 
+      // Limpia basura previa almacenada automáticamente
+      if (savedUrl) {
+        let clean = cleanDomain(savedUrl);
+        if (clean && !clean.includes("192.168.")) {
+          currentUrl = clean;
+        } else {
+          localStorage.removeItem("esp32_url");
+          currentUrl = DEFAULT_URL;
+        }
+      }
+
+      if (savedColor) selectColor(savedColor);
       document.getElementById("cfgUrl").value = currentUrl;
       
       startPolling();
     });
+
+    function cleanDomain(rawInput) {
+      if (!rawInput) return "";
+      let domain = rawInput.trim();
+      // Elimina prefijos corruptos como s// o http(s)://
+      domain = domain.replace(/^(s:\/\/|https?:\/\/)+/gi, '');
+      // Elimina diagonales al final
+      domain = domain.replace(/\/+$/, '');
+      return domain;
+    }
+
+    function getFullUrl(endpoint) {
+      let domain = cleanDomain(currentUrl);
+      if (!domain) domain = DEFAULT_URL;
+      
+      const separator = endpoint.includes('?') ? '&' : '?';
+      return `https://${domain}${endpoint}${separator}ngrok-skip-browser-warning=true`;
+    }
 
     function showView(viewName) {
       document.getElementById("viewDashboard").classList.add("hidden");
@@ -543,10 +571,12 @@
     }
 
     function saveSettings() {
-      let inputUrl = document.getElementById("cfgUrl").value.trim();
-      if(inputUrl.endsWith("/")) inputUrl = inputUrl.slice(0, -1);
-      
-      currentUrl = inputUrl;
+      let inputUrl = document.getElementById("cfgUrl").value;
+      let cleaned = cleanDomain(inputUrl);
+
+      if (!cleaned) cleaned = DEFAULT_URL;
+
+      currentUrl = cleaned;
       localStorage.setItem("esp32_url", currentUrl);
       localStorage.setItem("accent_color", accentColor);
 
@@ -559,22 +589,9 @@
       setInterval(fetchData, 2000);
     }
 
-    function getCleanUrl(endpoint) {
-      let base = currentUrl.trim();
-      if (!base.startsWith("http://") && !base.startsWith("https://")) {
-        base = "https://" + base;
-      }
-      if (base.endsWith("/")) base = base.slice(0, -1);
-
-      const separator = endpoint.includes("?") ? "&" : "?";
-      return `${base}${endpoint}${separator}ngrok-skip-browser-warning=true`;
-    }
-
     async function fetchData() {
-      if(!currentUrl) return;
-
       try {
-        const response = await fetch(getCleanUrl("/datos"));
+        const response = await fetch(getFullUrl("/datos"));
         if(!response.ok) throw new Error();
 
         const data = await response.json();
@@ -635,13 +652,13 @@
 
     async function sendBrillo(val) {
       try {
-        await fetch(getCleanUrl(`/setBrillo?val=${val}`));
+        await fetch(getFullUrl(`/setBrillo?val=${val}`));
       } catch(e){}
     }
 
     async function setMode(isAuto) {
       try {
-        await fetch(getCleanUrl("/toggleModo"));
+        await fetch(getFullUrl("/toggleModo"));
       } catch(e){}
     }
 
@@ -655,7 +672,7 @@
       }
 
       try {
-        await fetch(getCleanUrl("/girar"));
+        await fetch(getFullUrl("/girar"));
       } catch(e){}
     }
   </script>

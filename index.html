@@ -141,7 +141,6 @@
 
     function startPolling() {
       fetchData();
-      setInterval(fetchData, 2000);
     }
 
     async function fetchData() {
@@ -153,6 +152,10 @@
         setConnected(true);
       } catch (e) {
         setConnected(false);
+      } finally {
+        // En lugar de saturar al ESP32 con peticiones encimadas,
+        // esperamos 3 segundos después de que termina esta respuesta.
+        setTimeout(fetchData, 3000);
       }
     }
 
@@ -197,7 +200,7 @@
     }
 
     async function setMode(isAuto) {
-      try { await fetch(getFullUrl("/toggleModo")); fetchData(); } catch(e){}
+      try { await fetch(getFullUrl("/toggleModo")); } catch(e){}
     }
 
     async function triggerMotor(level, btnElem) {
